@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>你与上海匹配吗？</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .container {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px 24px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+  }
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    border-radius: 3px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+  .question-num {
+    font-size: 13px;
+    color: #667eea;
+    margin-bottom: 6px;
+  }
+  .question-text {
+    font-size: 17px;
+    color: #333;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .options button {
+    display: block;
+    width: 100%;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    background: #fff;
+    font-size: 15px;
+    color: #333;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .options button:hover,
+  .options button:active {
+    border-color: #667eea;
+    background: #f0f0ff;
+  }
+  .result-box {
+    text-align: center;
+    display: none;
+  }
+  .score-circle {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    font-weight: bold;
+    color: #fff;
+  }
+  .result-title {
+    font-size: 20px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  .result-desc {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.7;
+    margin-bottom: 20px;
+  }
+  .btn-restart {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .start-box { text-align: center; }
+  .start-box p { color: #666; font-size: 14px; margin-bottom: 20px; }
+  .btn-start {
+    padding: 14px 40px;
+    border: none;
+    border-radius: 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    font-size: 17px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- 开始页 -->
+  <div id="startPage" class="start-box">
+    <h1>🌆 你与上海匹配吗？</h1>
+    <p style="margin-top:10px;color:#999;font-size:13px;">8道题测出你的上海匹配度</p>
+    <p>测测你的生活方式和这座城市合不合拍</p>
+    <button class="btn-start" onclick="startQuiz()">开始测试</button>
+  </div>
+
+  <!-- 答题页 -->
+  <div id="quizPage" style="display:none;">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="question-num" id="qNum"></div>
+    <div class="question-text" id="qText"></div>
+    <div class="options" id="optionsBox"></div>
+  </div>
+
+  <!-- 结果页 -->
+  <div id="resultPage" class="result-box">
+    <div class="score-circle" id="scoreCircle"></div>
+    <div class="result-title" id="resultTitle"></div>
+    <div class="result-desc" id="resultDesc"></div>
+    <button class="btn-restart" onclick="restart()">再测一次</button>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q: "你每天通勤能接受多久？",
+    opts: [
+      { text: "30分钟内，远了受不了", score: 30 },
+      { text: "1小时内可以接受", score: 20 },
+      { text: "1.5小时也还行，习惯了", score: 10 },
+      { text: "无所谓，住公司隔壁最好", score: 25 }
+    ]
+  },
+  {
+    q: "周末你更想干嘛？",
+    opts: [
+      { text: "逛展、看演出、打卡新店", score: 30 },
+      { text: "找家好咖啡馆发呆", score: 25 },
+      { text: "去公园或滨江散步", score: 20 },
+      { text: "宅家不动，谁也别叫我", score: 10 }
+    ]
+  },
+  {
+    q: "你对"精致"的态度？",
+    opts: [
+      { text: "出门必须打扮，仪式感拉满", score: 30 },
+      { text: "看心情，偶尔精致一下", score: 20 },
+      { text: "舒服就行，不搞那些", score: 10 },
+      { text: "精致是什么？能吃吗", score: 5 }
+    ]
+  },
+  {
+    q: "你能接受的房租（合租/单间）？",
+    opts: [
+      { text: "2000以内，多了肉疼", score: 10 },
+      { text: "3000-4000，正常水平", score: 20 },
+      { text: "5000-6000，住得好点值得", score: 25 },
+      { text: "8000+无所谓，开心就好", score: 30 }
+    ]
+  },
+  {
+    q: "深夜饿了你会？",
+    opts: [
+      { text: "下楼便利店，上海便利店太方便了", score: 30 },
+      { text: "点个外卖，选择太多", score: 25 },
+      { text: "自己煮碗面凑合", score: 10 },
+      { text: "忍着睡觉，减肥", score: 5 }
+    ]
+  },
+  {
+    q: "你对"内卷"的感受？",
+    opts: [
+      { text: "享受竞争，越卷越兴奋", score: 30 },
+      { text: "能接受但会累，需要调节", score: 20 },
+      { text: "想躺但躺不平，很纠结", score: 15 },
+      { text: "完全不想卷，给我自由", score: 5 }
+    ]
+  },
+  {
+    q: "你更喜欢哪种社交？",
+    opts: [
+      { text: "热闹的局，人多才开心", score: 25 },
+      { text: "三两好友小聚，刚刚好", score: 25 },
+      { text: "一个人也挺好，享受独处", score: 15 },
+      { text: "社交恐惧，能不见就不见", score: 5 }
+    ]
+  },
+  {
+    q: "下雨天你的心情？",
+    opts: [
+      { text: "浪漫，喜欢雨天的氛围", score: 25 },
+      { text: "麻烦，但还好吧", score: 15 },
+      { text: "烦躁，不想出门", score: 5 },
+      { text: "无所谓，反正都在室内", score: 20 }
+    ]
+  }
+];
+
+let current = 0;
+let totalScore = 0;
+const maxScore = 240;
+
+function startQuiz() {
+  document.getElementById('startPage').style.display = 'none';
+  document.getElementById('quizPage').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  const q = questions[current];
+  document.getElementById('qNum').textContent = `第 ${current + 1} / ${questions.length} 题`;
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('progressFill').style.width = ((current) / questions.length * 100) + '%';
+
+  const box = document.getElementById('optionsBox');
+  box.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = ['A', 'B', 'C', 'D'][i] + '. ' + opt.text;
+    btn.onclick = () => selectOption(opt.score);
+    box.appendChild(btn);
+  });
+}
+
+function selectOption(score) {
+  totalScore += score;
+  current++;
+  if (current < questions.length) {
+    showQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function showResult() {
+  document.getElementById('quizPage').style.display = 'none';
+  document.getElementById('resultPage').style.display = 'block';
+
+  const percent = Math.round(totalScore / maxScore * 100);
+  const circle = document.getElementById('scoreCircle');
+  circle.textContent = percent + '%';
+
+  let color, title, desc;
+  if (percent >= 85) {
+    color = '#4CAF50';
+    title = '🎉 天选上海人！';
+    desc = '你和上海简直是天生一对。这座城市的节奏、氛围和生活方式，几乎就是为你量身定做的。留下来吧，这里就是你的主场。';
+  } else if (percent >= 65) {
+    color = '#2196F3';
+    title = '👍 挺匹配的！';
+    desc = '你和上海有不少契合的地方，虽然偶尔会有点小摩擦，但整体来说你在这里能过得挺舒服。继续探索这座城市的更多面吧。';
+  } else if (percent >= 45) {
+    color = '#FF9800';
+    title = '🤔 一般般吧';
+    desc = '你和上海说不上特别合拍，但也不是完全不行。可能你需要找到属于自己的生活方式，在这座城市里慢慢找到节奏。';
+  } else {
+    color = '#9E9E9E';
+    title = '😅 可能不太合适';
+    desc = '上海的风格和你的生活方式差异有点大。不过没关系，城市没有好坏，只有合不合适。也许另一座城市更适合你。';
+  }
+
+  circle.style.background = color;
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultDesc').textContent = desc;
+}
+
+function restart() {
+  current = 0;
+  totalScore = 0;
+  document.getElementById('resultPage').style.display = 'none';
+  document.getElementById('startPage').style.display = 'block';
+}
+</script>
+</body>
+</html>
